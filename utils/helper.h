@@ -21,6 +21,7 @@ void AskItemsName();
 void AskItems();
 
 bool isValidName(string name); //workshop
+bool isValidPhone(string phone);  //workshop
 
 bool isPositive(int x); //Plant
 

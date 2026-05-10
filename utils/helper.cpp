@@ -58,7 +58,20 @@ bool isValidName(string name) {
     return hasAlphabet;
 }
 
+bool isValidPhone(string phone) {
+    if (phone.empty()) return false;
+
+    for (char c : phone) {
+        if (!isdigit(static_cast<unsigned char>(c))) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 bool isPositive(int x)
 {
     return x > 0;
 }
+

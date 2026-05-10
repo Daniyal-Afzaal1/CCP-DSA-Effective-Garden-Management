@@ -1,40 +1,51 @@
-#include "WorkshopModule.h" // 
-
+#include "WorkshopModule.h" //
 
 // Constructor Logic
-Workshop::Workshop() {
+Workshop::Workshop()
+{
     confirmedCount = 0;
     waitingCount = 0;
+    maxSeats = 0;
+    title = "";
     confirmedHead = nullptr;
     confirmedTail = nullptr;
     waitingHead = nullptr;
     waitingTail = nullptr;
 }
 
-
 // Logic: Check Duplicate Registration
-bool isAlreadyRegistered(Workshop& ws, string name) {
-    Node* temp = ws.confirmedHead;
-    while (temp != nullptr) {
-        if (temp->name == name) return true;
+bool isAlreadyRegistered(Workshop &ws, string phone)
+{
+    Node *temp = ws.confirmedHead;
+    while (temp != nullptr)
+    {
+        if (temp->phone == phone)
+            return true;
         temp = temp->next;
     }
     temp = ws.waitingHead;
-    while (temp != nullptr) {
-        if (temp->name == name) return true;
+    while (temp != nullptr)
+    {
+        if (temp->phone == phone)
+            return true;
         temp = temp->next;
     }
     return false;
 }
 
 // Logic: Add Resident to List
-void addToList(Node*& head, Node*& tail, int& count, string name) {
-    Node* newNode = new Node;
+void addToList(Node *&head, Node *&tail, int &count, string name, string phone)
+{
+    Node *newNode = new Node;
     newNode->name = name;
+    newNode->phone = phone;
     newNode->next = nullptr;
-    if (head == nullptr) {
+    if (head == nullptr)
+    {
         head = tail = newNode;
-    } else {
+    }
+    else
+    {
         tail->next = newNode;
         tail = newNode;
     }
@@ -42,20 +53,28 @@ void addToList(Node*& head, Node*& tail, int& count, string name) {
 }
 
 // Logic: Remove Resident from List
-bool removeFromList(Node*& head, Node*& tail, int& count, string name) {
-    Node* current = head;
-    Node* previous = nullptr;
-    while (current != nullptr && current->name != name) {
+bool removeFromList(Node *&head, Node *&tail, int &count, string phone)
+{
+    Node *current = head;
+    Node *previous = nullptr;
+    while (current != nullptr && current->phone != phone)
+    {
         previous = current;
         current = current->next;
     }
-    if (current == nullptr) return false;
-    if (previous == nullptr) {
+    if (current == nullptr)
+        return false;
+    if (previous == nullptr)
+    {
         head = head->next;
-        if (head == nullptr) tail = nullptr;
-    } else {
+        if (head == nullptr)
+            tail = nullptr;
+    }
+    else
+    {
         previous->next = current->next;
-        if (current == tail) tail = previous;
+        if (current == tail)
+            tail = previous;
     }
     delete current;
     count--;
@@ -63,66 +82,119 @@ bool removeFromList(Node*& head, Node*& tail, int& count, string name) {
 }
 
 // Logic: Register Resident
-void registerResident(Workshop& ws, string name) {
-    if (!isValidName(name)) {
+void registerResident(Workshop &ws, string name, string phone)
+{
+    if (!isValidName(name))
+    {
         cout << "\n[ERROR] Invalid name.\n";
         return;
     }
-    if (isAlreadyRegistered(ws, name)) {
-        cout << "\n[ERROR] Resident is already registered.\n";
+    if (!isValidPhone(phone))
+    {
+        cout << "\n[ERROR] Invalid phone number. Only digits are allowed.\n";
         return;
     }
-    if (ws.confirmedCount < ws.maxSeats) {
-        addToList(ws.confirmedHead, ws.confirmedTail, ws.confirmedCount, name);
+    if (phone.length() != 11)
+    {
+        cout << "\n[ERROR] Phone number must be 11 digits.\n";
+        return;
+    }
+    if (isAlreadyRegistered(ws, phone))
+    {
+        cout << "\n[ERROR] Resident with this phone number is already registered.\n";
+        return;
+    }
+    if (ws.confirmedCount < ws.maxSeats)
+    {
+        addToList(ws.confirmedHead, ws.confirmedTail, ws.confirmedCount, name, phone);
         cout << "\n[SUCCESS] Registered successfully.\n";
-    } else {
-        addToList(ws.waitingHead, ws.waitingTail, ws.waitingCount, name);
+    }
+    else
+    {
+        addToList(ws.waitingHead, ws.waitingTail, ws.waitingCount, name, phone);
         cout << "\n[WAITLIST] Added to waiting list.\n";
     }
 }
 
 // Logic: Cancel Registration
-void cancelRegistration(Workshop& ws, string name) {
-    if (removeFromList(ws.confirmedHead, ws.confirmedTail, ws.confirmedCount, name)) {
+void cancelRegistration(Workshop &ws, string phone)
+{
+    if (removeFromList(ws.confirmedHead, ws.confirmedTail, ws.confirmedCount, phone))
+    {
         cout << "\n[CANCELLED] Registration removed.\n";
-        if (ws.waitingHead != nullptr) {
+        if (ws.waitingHead != nullptr)
+        {
             string nextResident = ws.waitingHead->name;
-            removeFromList(ws.waitingHead, ws.waitingTail, ws.waitingCount, nextResident);
-            addToList(ws.confirmedHead, ws.confirmedTail, ws.confirmedCount, nextResident);
+            string nextPhone = ws.waitingHead->phone;
+            removeFromList(ws.waitingHead, ws.waitingTail, ws.waitingCount, nextPhone);
+            addToList(ws.confirmedHead, ws.confirmedTail, ws.confirmedCount, nextResident, nextPhone);
             cout << "[PROMOTED] " << nextResident << " moved to confirmed list.\n";
         }
-    } else if (removeFromList(ws.waitingHead, ws.waitingTail, ws.waitingCount, name)) {
+    }
+    else if (removeFromList(ws.waitingHead, ws.waitingTail, ws.waitingCount, phone))
+    {
         cout << "\n[REMOVED] Removed from waiting list.\n";
-    } else {
+    }
+    else
+    {
         cout << "\n[ERROR] No matching record found.\n";
     }
 }
 
 // Logic: Display Workshop Status
-void displayStatus(Workshop& ws) {
+void displayStatus(Workshop &ws)
+{
     cout << "\nWorkshop : " << ws.title << endl;
     cout << "Confirmed Seats : " << ws.confirmedCount << " / " << ws.maxSeats << endl;
     cout << "Waiting List : " << ws.waitingCount << endl;
     cout << "\nConfirmed Residents:\n";
-    Node* temp = ws.confirmedHead;
-    if (!temp) cout << "None\n";
-    while (temp) {
-        cout << "- " << temp->name << endl;
+    Node *temp = ws.confirmedHead;
+    if (!temp)
+        cout << "None\n";
+    while (temp)
+    {
+        cout << "- " << temp->name << " (Phone: " << temp->phone << ")" << endl;
+        temp = temp->next;
+    }
+
+    // Waiting List Residents
+    cout << "\nWaiting List Residents:\n";
+
+    temp = ws.waitingHead;
+
+    if (temp == nullptr)
+    {
+        cout << "None\n";
+    }
+
+    while (temp != nullptr)
+    {
+
+        cout << "- "
+             << temp->name
+             << " (Phone: "
+             << temp->phone
+             << ")"
+             << endl;
+
         temp = temp->next;
     }
 }
 
 // Logic: Clear Memory
-void clearList(Node*& head) {
-    while (head != nullptr) {
-        Node* temp = head;
+void clearList(Node *&head)
+{
+    while (head != nullptr)
+    {
+        Node *temp = head;
         head = head->next;
         delete temp;
     }
     head = nullptr;
 }
 
-void workshopMenu() {
+void workshopMenu()
+{
 
     const int totalWorkshops = 3;
     Workshop workshops[totalWorkshops];
@@ -140,27 +212,29 @@ void workshopMenu() {
     int workshopChoice;
     int actionChoice;
     string residentName;
+    string residentPhone;
 
-    while (true) {
+    while (true)
+    {
 
         cout << "\n=========== COMMUNITY GARDEN ===========\n";
         cout << "        WORKSHOP SCHEDULING SYSTEM\n";
         cout << "========================================\n";
 
         // Display Workshops
-        for (int i = 0; i < totalWorkshops; i++) {
+        for (int i = 0; i < totalWorkshops; i++)
+        {
 
-            int remainingSeats =
-                workshops[i].maxSeats -
-                workshops[i].confirmedCount;
+            int remainingSeats = workshops[i].maxSeats - workshops[i].confirmedCount;
 
-            cout << i + 1 << ". "
-                 << workshops[i].title;
+            cout << i + 1 << ". " << workshops[i].title;
 
-            if (remainingSeats == 0) {
+            if (remainingSeats == 0)
+            {
                 cout << " [FULL]";
             }
-            else if (remainingSeats == 1) {
+            else if (remainingSeats == 1)
+            {
                 cout << " [!!! LIMITED SEATS !!!]";
             }
 
@@ -171,14 +245,14 @@ void workshopMenu() {
         cout << "\nSelect Workshop (1-4): ";
 
         // Validation
-        if (!(cin >> workshopChoice)) {
+        if (!(cin >> workshopChoice))
+        {
 
             cin.clear();
 
             cin.ignore(
                 numeric_limits<streamsize>::max(),
-                '\n'
-            );
+                '\n');
 
             cout << "\n[ERROR] Invalid input.\n";
 
@@ -187,30 +261,29 @@ void workshopMenu() {
 
         cin.ignore(
             numeric_limits<streamsize>::max(),
-            '\n'
-        );
+            '\n');
 
         // Exit
-        if (workshopChoice == 4) {
+        if (workshopChoice == 4)
+        {
             break;
         }
 
         // Invalid Range
         if (
-            workshopChoice < 1 ||
-            workshopChoice > totalWorkshops
-        ) {
+            workshopChoice < 1 || workshopChoice > totalWorkshops)
+        {
 
             cout << "\n[ERROR] Invalid workshop selection.\n";
 
             continue;
         }
 
-        Workshop& currentWorkshop =
-            workshops[workshopChoice - 1];
+        Workshop &currentWorkshop = workshops[workshopChoice - 1];
 
         // Workshop Menu
-        while (true) {
+        while (true)
+        {
 
             cout << "\n========================================\n";
 
@@ -228,14 +301,12 @@ void workshopMenu() {
             cout << "\nEnter Choice: ";
 
             // Validation
-            if (!(cin >> actionChoice)) {
+            if (!(cin >> actionChoice))
+            {
 
                 cin.clear();
 
-                cin.ignore(
-                    numeric_limits<streamsize>::max(),
-                    '\n'
-                );
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
                 cout << "\n[ERROR] Invalid input.\n";
 
@@ -244,48 +315,43 @@ void workshopMenu() {
 
             cin.ignore(
                 numeric_limits<streamsize>::max(),
-                '\n'
-            );
+                '\n');
 
             // Register
-            if (actionChoice == 1) {
+            if (actionChoice == 1)
+            {
 
                 cout << "\nEnter Resident Name: ";
-
                 getline(cin, residentName);
-
-                registerResident(
-                    currentWorkshop,
-                    residentName
-                );
+                cout << "Enter Resident Phone Number: ";
+                getline(cin, residentPhone);
+                registerResident(currentWorkshop, residentName, residentPhone);
             }
 
             // Cancel
-            else if (actionChoice == 2) {
-
-                cout << "\nEnter Resident Name to Cancel: ";
-
-                getline(cin, residentName);
-
-                cancelRegistration(
-                    currentWorkshop,
-                    residentName
-                );
+            else if (actionChoice == 2)
+            {
+                cout << "\nEnter Resident Phone Number to Cancel: ";
+                getline(cin, residentPhone);
+                cancelRegistration(currentWorkshop, residentPhone);
             }
 
             // Status
-            else if (actionChoice == 3) {
+            else if (actionChoice == 3)
+            {
 
                 displayStatus(currentWorkshop);
             }
 
             // Back
-            else if (actionChoice == 4) {
+            else if (actionChoice == 4)
+            {
 
                 break;
             }
 
-            else {
+            else
+            {
 
                 cout << "\n[ERROR] Invalid menu choice.\n";
             }
@@ -293,7 +359,8 @@ void workshopMenu() {
     }
 
     // Cleanup
-    for (int i = 0; i < totalWorkshops; i++) {
+    for (int i = 0; i < totalWorkshops; i++)
+    {
 
         clearList(workshops[i].confirmedHead);
 
